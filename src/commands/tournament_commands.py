@@ -122,3 +122,20 @@ def setup_tournament_commands(bot):
     @bot.tree.command(name="ping", description="Prüft, ob der Bot online ist")
     async def ping_command(interaction: discord.Interaction):
         await interaction.response.send_message("🏓 Pong! Der Bot ist online.", ephemeral=True)
+
+    @bot.tree.command(name="set_ranks", description="Setzt erlaubte Ränge für ein Turnier")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def set_ranks(interaction: discord.Interaction, tournament_name: str, ranks: str):
+        guild_id = interaction.guild.id
+        config_path = f'data/{guild_id}/{tournament_name}/config.json'
+        if not os.path.exists(config_path):
+            await interaction.response.send_message(f'Turnier "{tournament_name}" existiert nicht!', ephemeral=True)
+            return
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        config["ranks"] = [r.strip() for r in ranks.split(",")]
+        with open(config_path, "w") as f:
+            json.dump(config, f)
+        await interaction.response.send_message(
+            f"Ranks für '{tournament_name}' gesetzt: {', '.join(config['ranks'])}", ephemeral=True
+        )
